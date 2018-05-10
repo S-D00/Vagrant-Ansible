@@ -1,0 +1,51 @@
+---
+  - name: Configure Git
+    hosts: localhost
+    become: yes
+
+    tasks: 
+    
+    - name: Create Folder for Git repo
+      file:
+        path: /home/world
+        state: directory
+
+    - name: Git init
+      command: git init
+      args:
+        chdir: /home/world
+      become_user: root
+    
+    - name: Register remote repo
+      command: git remote add origin https://github.com/S-D00/hello_w.git
+      args:
+        chdir: /home/world
+      become_user: root
+
+    - name: Amend hooks folder permisisons
+      file:
+        path: /home/world/.git/hooks/
+        mode: "ug+x"
+        
+    - name: Create post commit hook
+      blockinfile:
+        path: /home/world/.git/hooks/post-commit
+        create: yes
+        mode: "ug+x"
+        block: | 
+                #!/bin/sh
+                curl http://localhost:80/git/notifyCommit?url=/home/world
+
+    - name: Create post merge hook 
+      blockinfile:
+        path: /home/world/.git/hooks/post-merge
+        create: yes
+        mode: "ug+x"
+        block: |
+                #!/bin/sh
+                curl http://localhost:80/git/notifyCommit?url=/home/world
+
+    
+
+
+      

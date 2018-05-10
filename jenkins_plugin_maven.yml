@@ -1,0 +1,59 @@
+---
+- name: Set Jenkins Maven home
+  become: yes
+  hosts: localhost
+    
+  tasks:
+
+  - name: Register initial Admin Pw
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: pass_var
+
+  - name: Save Pw
+    set_fact:
+      jenkins_pw: '{{ pass_var.stdout }}'
+
+  - name: Check and start jenkins service
+    service:
+      name: jenkins
+      state: started
+
+  - pause:
+      minutes: 1   
+
+  - name: Configure Maven_Home
+    jenkins_script:
+      script: 
+       a=Jenkins.instance.getExtensionList(hudson.tasks.Maven.DescriptorImpl.class)[0];
+       b=(a.installations as List);
+       b.add(new hudson.tasks.Maven.MavenInstallation( "Maven" ," /usr/share/maven" ,[]));
+       a.installations=b;
+       a.save()
+      url: http://localhost:80
+      user: admin
+      password: '{{ jenkins_pw }}'
+
+  - name: Install Maven Integration plugin
+    jenkins_plugin:
+      name: maven-plugin
+      with_dependencies: yes
+      state: present
+      url: http://localhost:80
+      url_username: admin
+      url_password: '{{ jenkins_pw }}'
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - pause:
+      minutes: 1
+
+  - name: Restart jenkins service
+    service:
+      name: jenkins
+      state: restarted
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success

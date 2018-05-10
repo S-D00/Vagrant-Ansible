@@ -1,0 +1,50 @@
+---
+- name: Configure master proxy settings
+  become: yes
+  
+  hosts: localhost 
+
+  tasks: 
+  - name:  Remove default config file
+    file:
+      path: /etc/nginx/conf.d/default.conf
+      state: absent
+    
+  - name: Write settings to file
+    blockinfile:
+      path: /etc/nginx/conf.d/proxy_config_master.conf
+      create: yes
+      mode: "u=rw,g=r,o=r"      
+      block: |
+        
+  
+            upstream master {
+                server 192.168.73.14:8080;
+              }
+            
+            server {
+            
+                listen 80;
+                server_name master;
+                
+                location / {
+
+                  proxy_set_header        Host $host;
+                  proxy_set_header        X-Forwarded-Host $host; 
+                  proxy_set_header        X-Real-IP $remote_addr;
+                  proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header        X-Forwarded-Proto $scheme;
+
+                  proxy_pass              http://127.0.0.1:8080;
+                  proxy_read_timeout      90;
+            
+                  
+                  proxy_http_version 1.1;
+                  proxy_request_buffering off;
+                }
+              }
+
+  - name: Restart NGinx service
+    service:
+      name: nginx
+      state: restarted

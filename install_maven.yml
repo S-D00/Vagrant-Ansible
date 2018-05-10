@@ -1,0 +1,15 @@
+---
+- name: Install Maven
+  become: yes
+  hosts: localhost
+
+  tasks:
+  - name: Install Maven
+    apt:
+      update_cache: yes
+      name: maven
+      state: present
+      
+  - name: Update apt cache
+    apt:
+      update_cache: yes

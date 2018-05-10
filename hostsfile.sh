@@ -1,0 +1,1 @@
+printf '192.168.73.14 master\n192.168.73.15 app\n' >> /etc/hosts

@@ -1,0 +1,17 @@
+---
+
+- name: Install Java
+  become: yes
+  hosts: localhost, app
+
+  tasks:
+  - name: Register Java repository
+    apt_repository:
+      repo=ppa:openjdk-r/ppa
+      state=present
+
+  - name: Install Java
+    apt:
+      update_cache: yes
+      name: openjdk-8-jre
+      state: present

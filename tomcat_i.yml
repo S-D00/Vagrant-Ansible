@@ -1,0 +1,94 @@
+---
+
+- name: Install Tomcat
+  become: yes
+  
+  
+  hosts: app
+
+  tasks:
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+
+  - name: Create tomcat group
+    group:
+      name: tomcat
+      state: present
+
+  - name: Create tomcat home folder
+    file:
+      path: /opt/tomcat
+      state: directory    
+  
+  - name: Download tomcat from GitHub repo
+    git:
+      repo: 'https://github.com/S-D00/tomcat.git'
+      dest: /opt/tomcat/
+
+  - name: Create tomcat user
+    user:
+      name: tomcat
+      comment: tomcat service account
+      group: tomcat
+      home: /opt/tomcat
+  
+  - name: Change Conf group ownership
+    command: chgrp -R tomcat conf
+    args:
+      chdir: /opt/tomcat
+    become_user: root
+  
+  - name: Change conf dir permissions
+    command: chmod g+rwx conf
+    args:
+      chdir: /opt/tomcat
+    become_user: root
+
+  - name: Change /opt/tomcat owner    
+    command: chown -R tomcat:tomcat /opt/tomcat
+    become_user: root
+
+  - name: Change work folder owner
+    command: chown -R tomcat work/
+    args:
+      chdir: /opt/tomcat
+    become_user: root
+
+  - name: Change webapps group owner    
+    command: chgrp -R tomcat /opt/tomcat/webapps
+    args:
+      chdir: /opt/tomcat
+    become_user: root
+
+  - name: Change webapps dir permissions
+    command: chmod -R g+w /opt/tomcat/webapps
+    args:
+      chdir: /opt/tomcat
+    become_user: root
+
+  - name: Move start script
+    become_user: root
+    command: mv /opt/tomcat/tomcat.conf /etc/init/
+
+  - pause:
+      seconds: 15
+
+  - name: Reload configuration
+    become_user: root
+    command: initctl reload-configuration
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - pause:
+      minutes: 1
+
+  - Name: Start tomcat service
+    command: initctl start tomcat
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success

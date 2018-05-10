@@ -1,0 +1,126 @@
+---
+- name: Configure Jenkins - Bypass Initial Wizzard $ Create User
+  become: yes
+  
+  hosts: localhost
+  
+  tasks:
+
+  - pause:
+      minutes: 2
+
+  - name: Register initial Admin Pw
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: pass_var
+
+  - name: Save Pw
+    set_fact:
+      jenkins_pw: '{{ pass_var.stdout }}'
+
+  - name: Add Java Args key to the config file
+    lineinfile:
+      path: /etc/default/jenkins
+      line: 'JAVA_ARGS="-Djenkins.install.runSetupWizard=false"'
+     
+  - name: Run groovy script - Set Wizzard state Complete
+    jenkins_script:
+      script: "import jenkins.model.*; import hudson.util.*; import jenkins.install.*; def instance = Jenkins.getInstance() instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)"
+      user: admin
+      password: '{{ jenkins_pw }}'
+
+  - name: Restart Jenkins service
+    command: service jenkins restart
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - pause:
+      minutes: 2
+
+  - name: Run groovy script to set  JNLP4
+    jenkins_script:
+      script: "import jenkins.model.*; import hudson.util.*; import jenkins.install.*; def instance = Jenkins.getInstance();
+      Set<String> agentProtocolsList = ['JNLP4-connect', 'Ping'];
+      instance.setAgentProtocols(agentProtocolsList);
+      instance.save()"
+      url: http://localhost:8080
+      user: admin
+      password: '{{ jenkins_pw }}'    
+
+  - name: Create jenkins user
+    jenkins_script:
+      script: jenkins.model.Jenkins.instance.securityRealm.createAccount("user", "pa55")
+      url: http://localhost:8080
+      user: admin
+      password: '{{ jenkins_pw }}'
+
+  - name: Http update site
+    replace:
+      path: /var/lib/jenkins/hudson.model.UpdateCenter.xml
+      regexp: 'https://updates.jenkins.io/update-center.json'
+      replace: 'http://updates.jenkins.io/update-center.json'
+
+  - name: Restart Jenkins service
+    command: service jenkins restart
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - pause:
+      minutes: 2
+
+  - name: install deploy Plugin
+    jenkins_plugin:
+      name: deploy
+      url: http://localhost:8080
+      url_username: admin
+      url_password: '{{ jenkins_pw }}'
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+   
+  - name: Install git Plugin
+    jenkins_plugin:
+      name: git
+      url: http://localhost:8080
+      url_username: admin
+      url_password: '{{ jenkins_pw }}'
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - name: Install Github Plugin
+    jenkins_plugin:
+      name: github
+      url: http://localhost:8080
+      url_username: admin
+      url_password: '{{ jenkins_pw }}'
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+
+  - name: Install Ansible Plugin
+    jenkins_plugin:
+      name: ansible
+      url: http://localhost:8080
+      url_username: admin
+      url_password: '{{ jenkins_pw }}'
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success
+  
+  - pause:
+      minutes: 2
+
+  - name: Restart Jenkins service
+    command: service jenkins restart
+    register: command_result
+    retries: 3
+    delay: 3
+    until: command_result | success

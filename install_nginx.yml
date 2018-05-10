@@ -1,0 +1,27 @@
+---
+
+- name: Install Nginx
+  hosts: localhost, app
+  become: yes
+
+  tasks:
+  - name: Add NGinx repository 1
+    apt_repository:
+      repo: deb http://nginx.org/packages/ubuntu/ trusty nginx
+      state: present
+
+  - name: Add NGinx repo 2
+    apt_repository:
+      repo: deb-src http://nginx.org/packages/ubuntu/ trusty nginx
+      state: present
+
+  - name: Add apt Key
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: ABF5BD827BD9BF62
+
+  - name: Install
+    apt:
+      update_cache: yes
+      name: nginx
+      state: present

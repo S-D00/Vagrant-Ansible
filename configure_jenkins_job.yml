@@ -1,0 +1,20 @@
+---
+- name: Configure Jenkins Job
+  hosts: localhost
+  become: yes
+
+  tasks:
+  - name: Register initial Admin Pw
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: pass_var    
+
+  - name: Save Pw
+    set_fact:
+      jenkins_pw: '{{ pass_var.stdout }}'
+
+  - name: Create jenkins credentials
+    shell: /vagrant/jenkins_creds.sh
+    become_user: root
+    
+  - name: Create jenkins job
+    shell: /vagrant/create_jenkins_job.sh
