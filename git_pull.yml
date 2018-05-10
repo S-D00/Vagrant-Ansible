@@ -1,0 +1,10 @@
+---
+- name: Pull git repo
+  hosts: localhost
+  become: yes 
+
+  tasks: 
+  - name: pull git repo
+    git:
+      repo: 'https://github.com/S-D00/hello_w.git'
+      dest: /home/world

@@ -1,4 +1,3 @@
-pass=`sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
 sudo echo '<com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl>                                      
 <scope>GLOBAL</scope>
   <id>tomcat</id>

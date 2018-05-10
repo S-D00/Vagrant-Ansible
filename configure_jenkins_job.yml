@@ -4,13 +4,11 @@
   become: yes
 
   tasks:
-  - name: Register initial Admin Pw
-    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
-    register: pass_var    
-
-  - name: Save Pw
-    set_fact:
-      jenkins_pw: '{{ pass_var.stdout }}'
+  
+  - name: Check jenkins service
+    service:
+      name: jenkins
+        state: started
 
   - name: Create jenkins credentials
     shell: /vagrant/jenkins_creds.sh
