@@ -8,7 +8,10 @@
   - name: Check jenkins service
     service:
       name: jenkins
-        state: started
+      state: started
+
+  - pause:
+     minutes: 1
 
   - name: Create jenkins credentials
     shell: /vagrant/jenkins_creds.sh
